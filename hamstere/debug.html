@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Hamster.io - Debug</title>
+  <style>
+    body { background: #111; color: #0f0; font-family: monospace; padding: 20px; font-size: 14px; }
+    .ok { color: #2ecc71; } .err { color: #ff4757; font-weight: bold; }
+    .warn { color: #f1c40f; }
+    #log { white-space: pre-wrap; }
+    button { padding: 10px 20px; font-size: 16px; margin: 10px; cursor: pointer; }
+  </style>
+</head>
+<body>
+<h2>🐹 Hamster.io — Test de chargement</h2>
+<div id="log">Chargement en cours...<br></div>
+<button onclick="testPlayBtn()">TEST: Simuler clic "Entrer dans l'Arène"</button>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js" onerror="window._fbFailed=true;log('WARN: Firebase CDN non disponible (mode hors-ligne OK)','warn');"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js" onerror=""></script>
+
+<script>
+function log(msg, cls='ok') {
+  const d = document.getElementById('log');
+  d.innerHTML += '<span class="' + cls + '">' + msg + '</span>\n';
+}
+
+// Test sequentiel de chaque script
+window.onerror = function(msg, src, line, col, err) {
+  log('ERREUR JS: ' + msg + ' | fichier: ' + (src||'?').split('/').pop() + ':' + line, 'err');
+};
+</script>
+
+<!-- Scripts du jeu charges un par un avec verification -->
+<script>
+log('Chargement firebase-config.js...');
+</script>
+<script src="js/firebase-config.js" onerror="log('ERREUR: firebase-config.js', 'err')"></script>
+
+<script>
+if(typeof window.FIREBASE_CONFIG !== 'undefined') log('firebase-config.js: OK - config presente');
+else log('firebase-config.js: FIREBASE_CONFIG absent!', 'err');
+log('Chargement audio.js...');
+</script>
+<script src="js/audio.js" onerror="log('ERREUR: audio.js', 'err')"></script>
+
+<script>
+if(typeof SoundSystem !== 'undefined') log('audio.js: OK (SoundSystem)');
+else log('audio.js: SoundSystem absent!', 'err');
+log('Chargement particles.js...');
+</script>
+<script src="js/particles.js" onerror="log('ERREUR: particles.js', 'err')"></script>
+
+<script>
+if(typeof ParticleSystem !== 'undefined') log('particles.js: OK (ParticleSystem)');
+else log('particles.js: ABSENT!', 'err');
+log('Chargement food.js...');
+</script>
+<script src="js/food.js" onerror="log('ERREUR: food.js', 'err')"></script>
+
+<script>
+if(typeof FoodManager !== 'undefined') log('food.js: OK (FoodManager)');
+else log('food.js: ABSENT!', 'err');
+log('Chargement hamster.js...');
+</script>
+<script src="js/hamster.js" onerror="log('ERREUR: hamster.js', 'err')"></script>
+
+<script>
+if(typeof Hamster !== 'undefined') log('hamster.js: OK (Hamster)');
+else log('hamster.js: ABSENT!', 'err');
+log('Chargement bot.js...');
+</script>
+<script src="js/bot.js" onerror="log('ERREUR: bot.js', 'err')"></script>
+
+<script>
+if(typeof BotManager !== 'undefined') log('bot.js: OK (BotManager)');
+else log('bot.js: ABSENT!', 'err');
+log('Chargement multiplayer.js...');
+</script>
+<script src="js/multiplayer.js" onerror="log('ERREUR: multiplayer.js', 'err')"></script>
+
+<script>
+if(typeof MultiplayerManager !== 'undefined') log('multiplayer.js: OK (MultiplayerManager)');
+else log('multiplayer.js: ABSENT!', 'err');
+log('Chargement controls.js...');
+</script>
+<script src="js/controls.js" onerror="log('ERREUR: controls.js', 'err')"></script>
+
+<script>
+if(typeof InputController !== 'undefined') log('controls.js: OK (InputController)');
+else log('controls.js: ABSENT!', 'err');
+log('Chargement game.js...');
+</script>
+<script src="js/game.js" onerror="log('ERREUR: game.js', 'err')"></script>
+
+<script>
+if(typeof GameEngine !== 'undefined') log('game.js: OK (GameEngine)');
+else log('game.js: ABSENT!', 'err');
+log('Chargement pwa.js...');
+</script>
+<script src="js/pwa.js" onerror="log('ERREUR: pwa.js', 'err')"></script>
+
+<script>
+if(typeof PwaManager !== 'undefined') log('pwa.js: OK (PwaManager)');
+else log('pwa.js: ABSENT!', 'err');
+
+log('\n=== BILAN ===');
+const classes = ['SoundSystem','ParticleSystem','FoodManager','Hamster','BotManager','MultiplayerManager','InputController','GameEngine','PwaManager'];
+let allOk = true;
+classes.forEach(c => {
+  if(typeof window[c] !== 'undefined' || eval('typeof ' + c) !== 'undefined') {
+    // ok
+  } else {
+    log('MANQUANT: ' + c, 'err');
+    allOk = false;
+  }
+});
+if(allOk) log('Tous les scripts sont charges ! Le jeu devrait fonctionner.', 'ok');
+else log('Des scripts sont manquants - voir les erreurs ci-dessus.', 'err');
+
+function testPlayBtn() {
+  log('\n--- Test du bouton Jouer ---');
+  try {
+    if(typeof GameEngine === 'undefined') { log('GameEngine non defini - jeu pas charge', 'err'); return; }
+    // Creer un faux canvas
+    const c = document.createElement('canvas');
+    c.id = 'game-canvas'; document.body.appendChild(c);
+    const mc = document.createElement('canvas');
+    mc.id = 'minimap-canvas'; document.body.appendChild(mc);
+    const pc = document.createElement('canvas');
+    pc.id = 'preview-canvas'; document.body.appendChild(pc);
+    
+    log('Tentative de new GameEngine()...', 'warn');
+    const ge = new GameEngine();
+    log('new GameEngine() REUSSI !', 'ok');
+    
+    log('Tentative de startGame()...', 'warn');
+    ge.startGame();
+    log('startGame() REUSSI ! Le jeu devrait fonctionner.', 'ok');
+  } catch(e) {
+    log('ERREUR lors du test: ' + e.message, 'err');
+    log('Stack: ' + e.stack, 'err');
+  }
+}
+</script>
+</body>
+</html>
+
